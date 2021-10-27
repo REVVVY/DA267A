@@ -11,39 +11,14 @@ struct circularBuffer{
   int head;
   int tail;
   int maxLength;
+  int filledElements;
 };
 
-
-/*
- * Initialize an empty buffer.
- */
 void initCircularBuffer(struct circularBuffer* bufferPtr, uint32_t* data, int maxLen);
 
-/*
- * This function should add the value specified by the 'value' 
- * argument at the tail of the buffer.
- *
- * The function should return:
- *  - 'value' if the value was successfully added to the queue.
- *  - INT_MIN (defined in limits.h) if the value was not added.
- */
-uint32_t addElement(struct circularBuffer* bufferPtr, uint32_t value);
+uint32_t addElement(struct circularBuffer* bufferPtr, uint32_t);
 
-
-/* 
- * Remove the oldest element, which is at the head of the queue. 
- * 
- * The function should return:
- *   - 'value' if the head element was successfully removed
- *   - INT_MIN (defined in limits.h) if no element was removed (i.e., the
- *     queue was empty when the function was called.       
- */
 uint32_t removeHead(struct circularBuffer* bufferPtr);
 
-/* 
- * Print the elements in the buffer from head to tail. 
- */
-void printBuffer(struct circularBuffer* bufferPtr);
-
+uint8_t isEmpty(struct circularBuffer *bufferptr);
 #endif
-

@@ -1,150 +1,99 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
 #include "circular_buffer.h"
-#include <stdint.h>
 
-void initCircularBuffer(struct circularBuffer *bufferPtr, u_int32_t *data, int maxLength)
+
+/*
+ * Initialize an empty buffer.
+ */
+void initCircularBuffer(struct circularBuffer *bufferPtr, uint32_t *data, int maxLength)
 {
   bufferPtr->data = data;
+  for (int i = 0; i < bufferPtr->maxLength; i++)
+  {
+    bufferPtr->data[i] = UINT32_MAX;
+  }
   bufferPtr->head = 0;
   bufferPtr->tail = 0;
   bufferPtr->maxLength = maxLength;
-
-  int lastPos = maxLength - 1;
-  int len = maxLength;
-  while (len > 0)
-  {
-    bufferPtr->data[lastPos] = INT_MIN;
-    lastPos--;
-    len--;
-  }
+  bufferPtr->filledElements = 0;
 }
 
-/*
- * This function should add the value specified by the 'value' 
- * argument at the tail of the buffer.
- *
- * The function should return:
- *  - 'value' if the value was successfully added to the queue.
- *  - INT_MIN (defined in limits.h) if the value was not added.
- */
 uint32_t addElement(struct circularBuffer *bufferPtr, uint32_t value)
 {
-  if (bufferPtr->tail == bufferPtr->head && bufferPtr->data[bufferPtr->tail] == INT_MIN)
+  if (bufferPtr->filledElements == 0) //buffern är tom, lägg till värde men ändra ej head och tail
   {
     bufferPtr->data[bufferPtr->tail] = value;
-    printf("%d läggs till\n", value);
-    return (uint32_t) value;
+    bufferPtr->filledElements++;
   }
-  else if (bufferPtr->tail == bufferPtr->head && bufferPtr->data[bufferPtr->tail] != INT_MIN)
+  else
   {
-    if (bufferPtr->tail == 0)
+    if (bufferPtr->filledElements == bufferPtr->maxLength) //om buffern är full
     {
-      bufferPtr->tail = bufferPtr->maxLength - 1;
-      bufferPtr->data[bufferPtr->tail] = value;
-      printf("%d läggs till\n", value);
-      return (uint32_t) value;
+      uint32_t overwritedElement = bufferPtr->data[bufferPtr->head];
+      bufferPtr->tail = bufferPtr->head;        //överskriver äldsta elementet därav hamnar
+      bufferPtr->data[bufferPtr->tail] = value; //nya värdet på heads plats, och head flyttas
+
+      if (bufferPtr->head == bufferPtr->maxLength - 1) //om head är på max, börja om på 0
+      {
+        bufferPtr->head = 0;
+      }
+      else //annars öka med 1
+      {
+        bufferPtr->head = bufferPtr->head + 1;
+      }
+    }
+    else //om buffern ej är full
+    {
+      if (bufferPtr->tail == bufferPtr->maxLength - 1) //är tail på max, börja om på 0
+      {
+        bufferPtr->tail = 0;
+        bufferPtr->data[bufferPtr->tail] = value;
+      }
+      else //tail ej max, öka med 1
+      {
+        bufferPtr->tail = bufferPtr->tail + 1;
+        bufferPtr->data[bufferPtr->tail] = value;
+      }
+
+      bufferPtr->filledElements++;
+    }
+  }
+  return value;
+}
+
+uint32_t removeHead(struct circularBuffer *bufferPtr)
+{
+  uint32_t value;
+  if (bufferPtr->filledElements == 0) //buffern är tom
+  {
+    return UINT32_MAX;
+  }
+  else if (bufferPtr->filledElements == 1) //finns endast 1 element står head och tail på samma
+  {
+    value = bufferPtr->data[bufferPtr->head];
+    bufferPtr->data[bufferPtr->head] = UINT32_MAX;
+    bufferPtr->filledElements = bufferPtr->filledElements - 1;
+    return value;
+  }
+  else //finns fler element, skall head flyttas till näst äldsta
+  {    //element
+    value = bufferPtr->data[bufferPtr->head];
+    bufferPtr->data[bufferPtr->head] = UINT32_MAX;
+
+    if (bufferPtr->head == bufferPtr->maxLength - 1)
+    {
+      bufferPtr->head = 0;
     }
     else
     {
-      bufferPtr->tail = bufferPtr->tail - 1;
-      bufferPtr->data[bufferPtr->tail] = value;
-      printf("%d läggs till\n", value);
-      return (uint32_t) value;
+      bufferPtr->head = bufferPtr->head + 1;
     }
-  }
-
-  else if (bufferPtr->tail == 0 && bufferPtr->maxLength - 1 != bufferPtr->head)
-  {
-    bufferPtr->tail = bufferPtr->maxLength - 1;
-    bufferPtr->data[bufferPtr->tail] = value;
-    printf("%d läggs till\n", value);
-    return (uint32_t) value;
-  }
-  else if (bufferPtr->tail - 1 != bufferPtr->head)
-  {
-    bufferPtr->tail = bufferPtr->tail - 1;
-    bufferPtr->data[bufferPtr->tail] = value;
-    printf("%d läggs till\n", value);
-    return (uint32_t) value;
-  }
-  else
-  {
-    printf("%d läggs ej till lista full\n", value);
-    return INT_MIN;
+    bufferPtr->filledElements = bufferPtr->filledElements - 1;
+    return value;
   }
 }
-
-/* 
- * Remove the oldest element, which is at the head of the queue. 
- * 
- * The function should return:
- *   - 'value' if the head element was successfully removed
- *   - INT_MIN (defined in limits.h) if no element was removed (i.e., the
- *     queue was empty when the function was called.       
- */
-uint32_t removeHead(struct circularBuffer *bufferPtr)
-{
-  if (bufferPtr->head == bufferPtr->tail && bufferPtr->data[bufferPtr->head] != INT_MIN)
-  {
-    printf("%d rensades\n", bufferPtr->data[bufferPtr->head]);
-    int value = bufferPtr->data[bufferPtr->head];
-    bufferPtr->data[bufferPtr->head] = INT_MIN;
-    return (uint32_t) value;
-  }
-  else if (bufferPtr->head == 0 && bufferPtr->tail != bufferPtr->maxLength - 1)
-  {
-    printf("%d rensades\n", bufferPtr->data[bufferPtr->head]);
-    int value = bufferPtr->data[bufferPtr->head];
-    bufferPtr->data[bufferPtr->head] = INT_MIN;
-    bufferPtr->head = bufferPtr->maxLength - 1;
-    return (uint32_t) value;
-  }
-   else if (bufferPtr->head == 0 && bufferPtr->tail == bufferPtr->maxLength - 1)
-  {
-    printf("%d rensades\n", bufferPtr->data[bufferPtr->head]);
-    int value = bufferPtr->data[bufferPtr->head];
-    bufferPtr->data[bufferPtr->head] = INT_MIN;
-    bufferPtr->head = bufferPtr->maxLength - 1;
-    return (uint32_t) value;
-  }
-  else if (bufferPtr->head != 0 && bufferPtr->head != bufferPtr->tail)
-  {
-    printf("%d rensades\n", bufferPtr->data[bufferPtr->head]);
-    int value = bufferPtr->data[bufferPtr->head];
-    bufferPtr->data[bufferPtr->head] = INT_MIN;
-    bufferPtr->head = bufferPtr->head - 1;
-    return (uint32_t) value;
-  }
-  else if (bufferPtr->tail == bufferPtr->head)
-  {
-    printf("%d rensades\n", bufferPtr->data[bufferPtr->head]);
-    int value = bufferPtr->data[bufferPtr->head];
-    bufferPtr->data[bufferPtr->head] = INT_MIN;
-    return (uint32_t) value;
-  }
-  else
-  {
-    return (uint32_t)INT16_MIN;
-  }
-}
-
-/* 
- * Print the elements in the buffer from head to tail. 
- */
-void printBuffer(struct circularBuffer *bufferPtr)
-{
-  int length = bufferPtr->maxLength;
-  int lastPos = bufferPtr->maxLength - 1;
-
-  while (length > 0)
-  {
-    if (lastPos != -1 && bufferPtr->data[lastPos] != INT_MIN)
-    {
-      printf("Pos %d har value %d\n", lastPos, bufferPtr->data[lastPos]);
-    }
-    lastPos--;
-    length--;
-  }
-  printf("Head: %d Tail: %d\n", bufferPtr->head, bufferPtr->tail);
+uint8_t isEmpty(struct circularBuffer *bufferptr){
+  return bufferptr->filledElements==0;
 }

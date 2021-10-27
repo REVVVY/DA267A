@@ -28,6 +28,8 @@ int origin = INT_MAX;      //Current travelers origin
 int destination = INT_MAX; //Current travelers destination
 int level = INT_MIN;       //Level the elevator should go to
 int readyForNext = 0;      //Check if next traveler can be sent
+int takeExtraStep = 0;
+int levelDiffrence = 0;
 
 // Used to not allow button pushes that are too close to each other in time
 static volatile uint64_t lastPush = -PUSH_TIME_US; // Kontrollera
@@ -71,7 +73,7 @@ void app_main()
     //Initialize travel needs (50 randomly generated travel needs)
     travel_needs[0].origin = 2;
     travel_needs[0].destination = 1;
-    travel_needs[1].origin = 1;
+    travel_needs[1].origin = 0;
     travel_needs[1].destination = 2;
     travel_needs[2].origin = 1;
     travel_needs[2].destination = 2;
@@ -230,15 +232,34 @@ void app_main()
                 {
                     level = origin;
                     printf("Origin: %d\n", origin);
+                    levelDiffrence = origin - destination;
+                    if (levelDiffrence < 0)
+                    {
+                        levelDiffrence = -levelDiffrence;
+                        /*if (levelDiffrence == 2)
+                        {
+                            takeExtraStep = 1;
+                        }*/
+                    }
+
                     origin = INT_MAX;
                 }
                 else if (destination != INT_MAX)
                 {
-                    level = destination;
-                    printf("Destination: %d\n", destination);
-                    destination = INT_MAX;
-                    removeFirstElementDoubleLinkedList(&doubleList);
-                    readyForNext = 0;
+                    /*if (takeExtraStep == 1)
+                    {
+                        printf("Du ska ta exta\n");
+                        level = 1;
+                        takeExtraStep = 0;
+                    }
+                    else
+                    {*/
+                        level = destination;
+                        printf("Destination: %d\n", destination);
+                        destination = INT_MAX;
+                        removeFirstElementDoubleLinkedList(&doubleList);
+                        readyForNext = 0;
+                   // }
                 }
             }
             else if (origin == INT_MAX && destination == INT_MAX)
@@ -249,9 +270,18 @@ void app_main()
                 printf("Origin: %d, Destination: %d\n", origin, destination);
             }
         }
-        printf("Level: %d\n", level);
+        //printf("Level: %d\n", level);
         if (level == 0) //IFALL DEN ÄR 0 UP
         {
+            if (levelDiffrence == 1)
+            {
+                vTaskDelay(pdMS_TO_TICKS(5000));
+            }
+            else if(levelDiffrence == 2){
+                vTaskDelay(pdMS_TO_TICKS(5000));
+                vTaskDelay(pdMS_TO_TICKS(5000));
+            }
+
             gpio_set_level(LED_PIN_LEVEL_UP, 1);
             gpio_set_level(LED_PIN_LEVEL_MIDDLE, 0);
             gpio_set_level(LED_PIN_LEVEL_DOWN, 0);
@@ -261,6 +291,14 @@ void app_main()
 
         else if (level == 1) //IFALL DEN ÄR 1 MIDDLE
         {
+            if (levelDiffrence == 1)
+            {
+                vTaskDelay(pdMS_TO_TICKS(5000));
+            }
+            else if(levelDiffrence == 2){
+                vTaskDelay(pdMS_TO_TICKS(5000));
+                vTaskDelay(pdMS_TO_TICKS(5000));
+            }
             gpio_set_level(LED_PIN_LEVEL_UP, 0);
             gpio_set_level(LED_PIN_LEVEL_MIDDLE, 1);
             gpio_set_level(LED_PIN_LEVEL_DOWN, 0);
@@ -270,6 +308,15 @@ void app_main()
 
         else if (level == 2)
         {
+            if (levelDiffrence == 1)
+            {
+                vTaskDelay(pdMS_TO_TICKS(5000));
+            }
+            else if(levelDiffrence == 2){
+                vTaskDelay(pdMS_TO_TICKS(5000));
+                vTaskDelay(pdMS_TO_TICKS(5000));
+            }
+            
             gpio_set_level(LED_PIN_LEVEL_UP, 0);
             gpio_set_level(LED_PIN_LEVEL_MIDDLE, 0);
             gpio_set_level(LED_PIN_LEVEL_DOWN, 1);
@@ -278,7 +325,7 @@ void app_main()
         }
         else
         {
-            printf("Do nothing\n");
+            //printf("Do nothing\n");
         }
     }
     //ISR = AVBROTT
