@@ -10,33 +10,15 @@
 // Error library
 #include "esp_err.h"
 
-/**
-* Initialises I2C bus, uses controller 0
-void initI2C(int sdapin, int sclpin)
-{
-    // configure and install driver
-    i2c_config_t conf;
-    conf.mode = I2C_MODE_MASTER;             // ESP32 acts as master
-    conf.sda_io_num = sdapin;                // pin used for SDA
-    conf.scl_io_num = sclpin;                // SCL pin number
-    conf.sda_pullup_en = GPIO_PULLUP_ENABLE; // The SDA and SCL lines are active low, so they should be pulled up with resistors
-    conf.scl_pullup_en = GPIO_PULLUP_ENABLE; // enables pullup on SDA
-    conf.master.clk_speed = 100000;          // Standard mode (100 Kbit/s)
-
-    
-    ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_0, &conf));
-    ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, conf.mode, 0, 0, 0));
-}*/
-
 void initI2C(int sdapin, int sclpin)
 {
     i2c_config_t config = {
-        .mode = I2C_MODE_MASTER,
-        .sda_io_num = sdapin,
-        .scl_io_num = sclpin,
-        .sda_pullup_en = GPIO_PULLUP_ENABLE,
-        .scl_pullup_en = GPIO_PULLUP_ENABLE,
-        .master.clk_speed = 100000 // Hz
+        .mode = I2C_MODE_MASTER, // ESP32 acts as master
+        .sda_io_num = sdapin, // pin used for SDA
+        .scl_io_num = sclpin, // SCL pin number
+        .sda_pullup_en = GPIO_PULLUP_ENABLE, // The SDA and SCL lines are active low, so they should be pulled up with resistors
+        .scl_pullup_en = GPIO_PULLUP_ENABLE, // enables pullup on SDA
+        .master.clk_speed = 100000 // Standard mode (100 Kbit/s)
     };
     ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_0, &config));
     ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, config.mode, 0, 0, 0));
